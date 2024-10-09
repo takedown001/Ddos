@@ -1,0 +1,14 @@
+{
+    "name": "My Codespace",
+    "customizations": {
+        "vscode": {
+            "settings": {
+            },
+            "extensions": [
+        
+            ]
+        }
+    },
+    "onCreateCommand": "pip install flask requests",
+    "postCreateCommand": "python3 child.py"
+}
